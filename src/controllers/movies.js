@@ -1,0 +1,45 @@
+const { default: axios } = require('axios');
+
+/**
+ * @desc fetch all movies
+ * @route /api/v1/movies
+ * @returns all movies in a results array
+ */
+exports.fetchAllMovies = async (req, res, next) => {
+  try {
+    // the movie contains a data field that returns the result, so we destructure that and then rename it to movies
+    const { data: movies } = await axios.get(process.env.SWAPI_API);
+
+    if (!movies.results) {
+      return res
+        .status(400)
+        .json({ success: false, message: 'No movies found' });
+    }
+
+    const formattedResponse = movies.results
+      .map(({ title, opening_crawl, release_date, url }) => {
+        const movieId = url.match(/(\d+)/);
+
+        return {
+          movieId: +movieId[0],
+          title,
+          opening_crawl,
+          release_date,
+          comments: [],
+          commentCount: 0,
+        };
+      })
+      .sort(
+        (a, b) =>
+          new Date(a.release_date).valueOf() -
+          new Date(b.release_date).valueOf()
+      );
+
+    res.status(200).json({
+      success: true,
+      data: formattedResponse,
+    });
+  } catch (error) {
+    res.json({ success: false, message: error.message });
+  }
+};
