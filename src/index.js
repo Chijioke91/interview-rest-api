@@ -1,7 +1,7 @@
 require('dotenv').config();
 const express = require('express');
 const morgan = require('morgan');
-const { movieRoutes, commentRoutes } = require('./routes');
+const { movieRoutes, commentRoutes, characterRoutes } = require('./routes');
 
 const port = process.env.PORT;
 
@@ -18,6 +18,7 @@ if (process.env.NODE_ENV === 'development') {
 // routes
 app.use('/api/v1/movies', movieRoutes);
 app.use('/api/v1/comments', commentRoutes);
+app.use('/api/v1/characters', characterRoutes);
 
 app.listen(port, () => {
   console.log(

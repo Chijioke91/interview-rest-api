@@ -10,6 +10,7 @@ exports.fetchAllMovies = async (req, res, next) => {
     // the movie contains a data field that returns the result, so we destructure that and then rename it to movies
     const { data: movies } = await axios.get(process.env.SWAPI_API);
 
+    // check if movies are returned
     if (!movies.results) {
       return res
         .status(400)
@@ -21,7 +22,7 @@ exports.fetchAllMovies = async (req, res, next) => {
         const movieId = url.match(/(\d+)/);
 
         return {
-          movieId: +movieId[0],
+          movieId: parseInt(movieId[0]),
           title,
           opening_crawl,
           release_date,
