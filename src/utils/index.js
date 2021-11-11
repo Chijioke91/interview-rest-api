@@ -1,4 +1,5 @@
 const { default: axios } = require('axios');
+const { prisma } = require('../../lib/prisma');
 
 function paginator(items, current_page, per_page_items) {
   let page = current_page || 1,
@@ -97,12 +98,33 @@ const sortCharactersByHeight = (characterArr, orderBy) => {
   }
 };
 
+const filterCharactersByGender = async (characterArr, gender) =>
+  characterArr.filter(
+    (character) => character.gender.toLowerCase() === gender.toLowerCase()
+  );
+
 function convertCmToFeet(n) {
   var realFeet = (n * 0.3937) / 12;
   var feet = Math.floor(realFeet);
   var inches = Math.round((realFeet - feet) * 12);
   return `${feet}ft and ${inches} inches`;
 }
+
+const fetchMovieCommentCount = async (movieId) => {
+  try {
+    const count = await prisma.comment.count({
+      where: {
+        movieId,
+      },
+    });
+
+    return count;
+  } catch (error) {
+    throw new Error(error.message);
+  }
+};
+
+const convertToUTC = (date) => new Date(date).toUTCString();
 
 module.exports = {
   paginator,
@@ -111,4 +133,7 @@ module.exports = {
   sortCharactersByGender,
   sortCharactersByHeight,
   convertCmToFeet,
+  filterCharactersByGender,
+  fetchMovieCommentCount,
+  convertToUTC,
 };

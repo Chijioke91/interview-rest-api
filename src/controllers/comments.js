@@ -1,10 +1,9 @@
 const { prisma } = require('../../lib/prisma');
+const { convertToUTC } = require('../utils');
 
-exports.createComment = async (req, res) => {
+exports.createMovieComment = async (req, res) => {
   try {
-    const { movieId } = req.params;
-
-    const { text } = req.body;
+    const { text, movieId } = req.body;
 
     // text length has been set to take at most 500 characters
     // we will just perform another check just incase it does exceed
@@ -17,18 +16,22 @@ exports.createComment = async (req, res) => {
 
     const newMovie = await prisma.comment.create({
       data: {
-        movieId: +movieId,
+        movieId: parseInt(movieId),
         text,
       },
     });
 
-    res.status(200).json({ success: true, data: newMovie });
+    res.status(200).json({
+      success: true,
+      data: newMovie,
+      message: 'Comment created successfully',
+    });
   } catch (error) {
     res.json({ success: false, message: error.message });
   }
 };
 
-exports.fetchComments = async (req, res) => {
+exports.fetchAllComments = async (req, res) => {
   try {
     const commenterIpAddress = req.ip;
 
@@ -37,8 +40,8 @@ exports.fetchComments = async (req, res) => {
     const formattedResponse = comments
       .map((comment) => ({
         ...comment,
-        createdAt: new Date(comment.createdAt).toUTCString(),
-        updatedAt: new Date(comment.updatedAt).toUTCString(),
+        createdAt: convertToUTC(comment.createdAt),
+        updatedAt: convertToUTC(comment.updatedAt),
         commenterIpAddress,
       }))
       .sort(
@@ -46,7 +49,11 @@ exports.fetchComments = async (req, res) => {
           new Date(b.createdAt).valueOf() - new Date(a.createdAt).valueOf()
       );
 
-    res.status(200).json({ success: true, data: formattedResponse });
+    res.status(200).json({
+      success: true,
+      data: formattedResponse,
+      message: 'Comment fetched successfully',
+    });
   } catch (error) {
     res.json({ success: false, message: error.message });
   }
@@ -60,11 +67,20 @@ exports.fetchMovieComments = async (req, res) => {
 
     const comments = await prisma.comment.findMany();
 
+    // let's check if we have comments on the db
+
+    if (!comments.length) {
+      return res.status(404).json({
+        success: false,
+        message: 'Sorry, there is no comment to be retrieved',
+      });
+    }
+
     const formattedResponse = comments
       .map((comment) => ({
         ...comment,
-        createdAt: new Date(comment.createdAt).toUTCString(),
-        updatedAt: new Date(comment.updatedAt).toUTCString(),
+        createdAt: convertToUTC(comment.createdAt),
+        updatedAt: convertToUTC(comment.updatedAt),
         commenterIpAddress,
       }))
       .filter(
@@ -75,14 +91,102 @@ exports.fetchMovieComments = async (req, res) => {
           new Date(b.createdAt).valueOf() - new Date(a.createdAt).valueOf()
       );
 
-    if (!formattedResponse.length) {
+    res.status(200).json({
+      success: true,
+      data: formattedResponse,
+      message: 'Movie Comments fetched successfully',
+    });
+  } catch (error) {
+    res.json({ success: false, message: error.message });
+  }
+};
+
+exports.updateMovieComment = async (req, res) => {
+  try {
+    let { movieId, commentId } = req.params;
+
+    const { text } = req.body;
+
+    movieId = parseInt(movieId);
+    commentId = parseInt(commentId);
+
+    if (!movieId) {
       return res.status(404).json({
         success: false,
-        message: 'Sorry, there is no comment to be retrieved',
+        message: 'Sorry, we could not find the comment',
       });
     }
 
-    res.status(200).json({ success: true, data: formattedResponse });
+    const comment = await prisma.comment.findFirst({
+      where: {
+        movieId,
+        id: commentId,
+      },
+    });
+
+    if (!comment) {
+      return res.status(404).json({
+        success: false,
+        message: 'Sorry, we could not find the comment',
+      });
+    }
+
+    const updatedComment = await prisma.comment.update({
+      where: {
+        id: commentId,
+      },
+      data: {
+        text,
+      },
+    });
+
+    return res.status(200).json({
+      success: false,
+      data: updatedComment,
+      message: 'Comment updated successfully',
+    });
+  } catch (error) {
+    res.json({ success: false, message: error.message });
+  }
+};
+
+exports.deleteMovieComment = async (req, res) => {
+  try {
+    let { movieId, commentId } = req.params;
+
+    movieId = parseInt(movieId);
+    commentId = parseInt(commentId);
+
+    if (!movieId) {
+      return res.status(404).json({
+        success: false,
+        message: 'Sorry, we could not find the comment',
+      });
+    }
+
+    const comment = await prisma.comment.findFirst({
+      where: {
+        movieId,
+        id: commentId,
+      },
+    });
+
+    if (!comment) {
+      return res.status(404).json({
+        success: false,
+        message: 'Sorry, we could not find the comment',
+      });
+    }
+
+    await prisma.comment.delete({
+      where: {
+        id: commentId,
+      },
+    });
+
+    return res
+      .status(200)
+      .json({ success: false, message: 'Comment deleted successfully' });
   } catch (error) {
     res.json({ success: false, message: error.message });
   }

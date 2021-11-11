@@ -1,4 +1,5 @@
 const { default: axios } = require('axios');
+const { fetchMovieCommentCount } = require('../utils');
 
 /**
  * @desc fetch all movies
@@ -18,16 +19,17 @@ exports.fetchAllMovies = async (req, res, next) => {
     }
 
     const formattedResponse = movies.results
-      .map(({ title, opening_crawl, release_date, url }) => {
+      .map(async ({ title, opening_crawl, release_date, url }) => {
         const movieId = url.match(/(\d+)/);
+
+        const commentCount = await fetchMovieCommentCount(parseInt(movieId[0]));
 
         return {
           movieId: parseInt(movieId[0]),
           title,
           opening_crawl,
           release_date,
-          comments: [],
-          commentCount: 0,
+          commentCount,
         };
       })
       .sort(
@@ -39,6 +41,37 @@ exports.fetchAllMovies = async (req, res, next) => {
     res.status(200).json({
       success: true,
       data: formattedResponse,
+    });
+  } catch (error) {
+    res.json({ success: false, message: error.message });
+  }
+};
+
+exports.fetchMovie = async (req, res) => {
+  try {
+    let { movieId } = req.params;
+
+    movieId = parseInt(movieId);
+
+    const { data: movie } = await axios.get(
+      `${process.env.SWAPI_API}/${movieId}`
+    );
+
+    const commentCount = await fetchMovieCommentCount(movieId);
+
+    let formattedMovieResponse = {
+      movieId,
+      title: movie.name,
+      opening_crawl: movie.opening_crawl,
+      release_date: movie.release_date,
+      commentCount,
+    };
+
+    console.log('cj', movie);
+
+    res.status(200).json({
+      success: true,
+      data: formattedMovieResponse,
     });
   } catch (error) {
     res.json({ success: false, message: error.message });

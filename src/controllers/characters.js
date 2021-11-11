@@ -5,16 +5,16 @@ const {
   sortCharactersByGender,
   sortCharactersByHeight,
   convertCmToFeet,
+  filterCharactersByGender,
 } = require('../utils');
 
 exports.fetchMovieCharacters = async (req, res) => {
-  const { sortBy, orderBy = 'asc' } = req.query;
+  const { sortBy, filterBy, orderBy = 'asc' } = req.query;
   const { movieId } = req.params;
 
   const { data: movie } = await axios.get(
     `${process.env.SWAPI_API}/${movieId}`
   );
-
   // we will probably incorporate redis here to aid in fast response
   const characters = await fetchCharacters(movie.characters);
 
@@ -47,6 +47,13 @@ exports.fetchMovieCharacters = async (req, res) => {
     formattedResponse = sortCharactersByGender(formattedResponse, orderBy);
   } else if (sortBy === 'height') {
     formattedResponse = sortCharactersByHeight(formattedResponse, orderBy);
+  }
+
+  if (filterBy) {
+    formattedResponse = await filterCharactersByGender(
+      formattedResponse,
+      filterBy
+    );
   }
 
   // we add the converted heights
