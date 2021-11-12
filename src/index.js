@@ -11,6 +11,7 @@ app.set('trust proxy', true);
 
 app.use(express.json());
 
+// we use morgan to show all the request loggings
 if (process.env.NODE_ENV === 'development') {
   app.use(morgan('dev'));
 }

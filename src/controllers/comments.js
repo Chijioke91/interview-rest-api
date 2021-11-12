@@ -1,6 +1,13 @@
 const { prisma } = require('../../lib/prisma');
 const { convertToUTC } = require('../utils');
 
+/**
+ * @description: This controller creates comment for specific movie
+ * @route /api/v1/comments
+ * @requestBody accepts text and movieId
+ * @method POST
+ */
+
 exports.createMovieComment = async (req, res) => {
   try {
     const { text, movieId } = req.body;
@@ -31,6 +38,12 @@ exports.createMovieComment = async (req, res) => {
   }
 };
 
+/**
+ * @description: This controller fetches all comments on the DB
+ * @route /api/v1/comments
+ * @method GET
+ */
+
 exports.fetchAllComments = async (req, res) => {
   try {
     const commenterIpAddress = req.ip;
@@ -58,6 +71,13 @@ exports.fetchAllComments = async (req, res) => {
     res.json({ success: false, message: error.message });
   }
 };
+
+/**
+ * @description: This controller fetches comments for specific movie
+ * @route /api/v1/comments
+ * @requestParams accepts movieId
+ * @method GET
+ */
 
 exports.fetchMovieComments = async (req, res) => {
   try {
@@ -101,6 +121,13 @@ exports.fetchMovieComments = async (req, res) => {
   }
 };
 
+/**
+ * @description: This controller updates comment for specific movie
+ * @route /api/v1/comments/:movieId/:commentId
+ * @requestParams accepts movieId  and commentId
+ * @requestBody accepts text
+ * @method PUT
+ */
 exports.updateMovieComment = async (req, res) => {
   try {
     let { movieId, commentId } = req.params;
@@ -149,6 +176,13 @@ exports.updateMovieComment = async (req, res) => {
     res.json({ success: false, message: error.message });
   }
 };
+
+/**
+ * @description: This controller updates comment for specific movie
+ * @route /api/v1/comments/:movieId/:commentId
+ * @requestParams accepts movieId  and commentId
+ * @method DELETE
+ */
 
 exports.deleteMovieComment = async (req, res) => {
   try {

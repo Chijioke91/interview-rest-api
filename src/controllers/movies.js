@@ -78,8 +78,6 @@ exports.fetchMovie = async (req, res) => {
       comment_count,
     };
 
-    console.log('cj', movie);
-
     res.status(200).json({
       success: true,
       data: formattedMovieResponse,

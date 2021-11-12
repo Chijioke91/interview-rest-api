@@ -1,5 +1,11 @@
 const { default: axios } = require('axios');
 const { prisma } = require('../../lib/prisma');
+// const redis = require('redis');
+const Promise = require('bluebird');
+const redis = Promise.promisifyAll(require('redis'));
+
+const REDIS_PORT = process.env.REDIS_PORT;
+const redisClient = redis.createClient(REDIS_PORT);
 
 function paginator(items, current_page, per_page_items) {
   let page = current_page || 1,
@@ -133,6 +139,18 @@ const sortMoviesByReleaseDate = (movies) => {
   );
 };
 
+const fetchCachedCharacters = async (cacheKey) => {
+  try {
+    let cachedCharacters = await redisClient.getAsync(cacheKey);
+
+    if (cachedCharacters) {
+      return JSON.parse(cachedCharacters);
+    }
+  } catch (error) {
+    throw error;
+  }
+};
+
 module.exports = {
   paginator,
   fetchCharacters,
@@ -144,4 +162,5 @@ module.exports = {
   fetchMovieCommentCount,
   convertToUTC,
   sortMoviesByReleaseDate,
+  fetchCachedCharacters,
 };

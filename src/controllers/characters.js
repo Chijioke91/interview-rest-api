@@ -1,4 +1,10 @@
 const { default: axios } = require('axios');
+const redis = require('redis');
+
+const REDIS_PORT = process.env.REDIS_PORT;
+
+const redisClient = redis.createClient(REDIS_PORT);
+
 const {
   fetchCharacters,
   sortCharactersByName,
@@ -6,6 +12,7 @@ const {
   sortCharactersByHeight,
   convertCmToFeet,
   filterCharactersByGender,
+  fetchCachedCharacters,
 } = require('../utils');
 
 /**
@@ -20,16 +27,46 @@ exports.fetchMovieCharacters = async (req, res) => {
   const { sortBy, filterBy, orderBy = 'asc' } = req.query;
   const { movieId } = req.params;
 
+  let characters;
+
   const { data: movie } = await axios.get(
     `${process.env.SWAPI_API}/${movieId}`
   );
-  // we will probably incorporate redis here to aid in fast response
-  const characters = await fetchCharacters(movie.characters);
 
-  if (!characters.length) {
+  // we will probably incorporate redis here to aid in fast response
+  let key = `characters${sortBy || filterBy || orderBy ? '-' : ''}`;
+
+  if (sortBy) {
+    key = `${key}${sortBy}`;
+  }
+
+  if (filterBy) {
+    key = `${key}${filterBy}`;
+  }
+
+  if (orderBy) {
+    key = `${key}${orderBy}`;
+  }
+
+  const cachedCharacters = await fetchCachedCharacters(key);
+
+  // const cachedCharacters = redisClient.setex(key.toString(), 3600, JSON.stringify(characters));
+
+  // console.log(typeof key);
+  // console.log('cjay', cachedCharacters);
+
+  if (cachedCharacters) {
+    characters = cachedCharacters;
+  } else {
+    characters = await fetchCharacters(movie.characters);
+    redisClient.setex(key, 3600, JSON.stringify(characters));
+  }
+
+  // lets cache the characters returned with redis
+  // redisClient.setex(key, 3600, JSON.stringify(characters));
+  if (!characters?.length) {
     return res.status(400).json({
       success: false,
-      message,
       message: 'Sorry, we could not retrieve any character for this movie',
     });
   }
