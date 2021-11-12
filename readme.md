@@ -1,6 +1,6 @@
 # METACARE MOVIELIST API
 
-> This API is designed to work with the SWAPI api in a bid to test efficient use of external APIs. The API uses Redis to cache expensive requests
+> This API is designed to work with the SWAPI api in a bid to test efficient use of external APIs. The API uses Redis to cache expensive requests. The API also makes use of an sql database: postgresql to be precise.
 
 ## Usage
 
