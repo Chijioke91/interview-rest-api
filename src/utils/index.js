@@ -3,11 +3,17 @@ const { prisma } = require('../../lib/prisma');
 const Promise = require('bluebird');
 const redis = Promise.promisifyAll(require('redis'));
 
-const redisClient = redis.createClient({
-  host: process.env.REDIS_HOST,
-  port: process.env.REDIS_PORT,
-  password: process.env.REDIS_PASSWORD,
-});
+let redisClient;
+
+if (process.env.NODE_ENV === 'production') {
+  redisClient = redis.createClient({
+    host: process.env.REDIS_HOST,
+    port: process.env.REDIS_PORT,
+    password: process.env.REDIS_PASSWORD,
+  });
+} else {
+  redisClient = redis.createClient();
+}
 
 function paginator(items, current_page, per_page_items) {
   let page = current_page || 1,
