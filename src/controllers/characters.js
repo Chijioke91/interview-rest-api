@@ -1,9 +1,4 @@
 const { default: axios } = require('axios');
-const redis = require('redis');
-
-const REDIS_PORT = process.env.REDIS_PORT;
-
-const redisClient = redis.createClient(REDIS_PORT);
 
 const {
   fetchCharacters,
@@ -13,6 +8,7 @@ const {
   convertCmToFeet,
   filterCharactersByGender,
   fetchCachedCharacters,
+  redisClient,
 } = require('../utils');
 
 /**
@@ -22,7 +18,6 @@ const {
  * @method GET
  * @returns  name, heightInCm,mass,hair_color,skin_color,eye_color,birth_year,gender,heightInFeet
  */
-
 exports.fetchMovieCharacters = async (req, res) => {
   const { sortBy, filterBy, orderBy = 'asc' } = req.query;
   const { movieId } = req.params;
@@ -33,7 +28,6 @@ exports.fetchMovieCharacters = async (req, res) => {
     `${process.env.SWAPI_API}/${movieId}`
   );
 
-  // we will probably incorporate redis here to aid in fast response
   let key = `characters${sortBy || filterBy || orderBy ? '-' : ''}`;
 
   if (sortBy) {
@@ -48,12 +42,8 @@ exports.fetchMovieCharacters = async (req, res) => {
     key = `${key}${orderBy}`;
   }
 
+  // let's try to fetch characters from our cache
   const cachedCharacters = await fetchCachedCharacters(key);
-
-  // const cachedCharacters = redisClient.setex(key.toString(), 3600, JSON.stringify(characters));
-
-  // console.log(typeof key);
-  // console.log('cjay', cachedCharacters);
 
   if (cachedCharacters) {
     characters = cachedCharacters;
@@ -62,8 +52,6 @@ exports.fetchMovieCharacters = async (req, res) => {
     redisClient.setex(key, 3600, JSON.stringify(characters));
   }
 
-  // lets cache the characters returned with redis
-  // redisClient.setex(key, 3600, JSON.stringify(characters));
   if (!characters?.length) {
     return res.status(400).json({
       success: false,
@@ -94,6 +82,7 @@ exports.fetchMovieCharacters = async (req, res) => {
     })
   );
 
+  // check for query Parameters
   if (sortBy && sortBy.toLowerCase() === 'name') {
     formattedResponse = sortCharactersByName(formattedResponse, orderBy);
   } else if (sortBy && sortBy.toLowerCase() === 'gender') {

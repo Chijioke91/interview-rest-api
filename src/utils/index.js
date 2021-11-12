@@ -1,11 +1,13 @@
 const { default: axios } = require('axios');
 const { prisma } = require('../../lib/prisma');
-// const redis = require('redis');
 const Promise = require('bluebird');
 const redis = Promise.promisifyAll(require('redis'));
 
-const REDIS_PORT = process.env.REDIS_PORT;
-const redisClient = redis.createClient(REDIS_PORT);
+const redisClient = redis.createClient({
+  host: process.env.REDIS_HOST,
+  port: process.env.REDIS_PORT,
+  password: process.env.REDIS_PASSWORD,
+});
 
 function paginator(items, current_page, per_page_items) {
   let page = current_page || 1,
@@ -163,4 +165,5 @@ module.exports = {
   convertToUTC,
   sortMoviesByReleaseDate,
   fetchCachedCharacters,
+  redisClient,
 };
