@@ -28,7 +28,7 @@ exports.createMovieComment = async (req, res) => {
       },
     });
 
-    res.status(200).json({
+    res.status(201).json({
       success: true,
       data: newMovie,
       message: 'Comment created successfully',
@@ -62,6 +62,13 @@ exports.fetchAllComments = async (req, res) => {
           new Date(b.createdAt).valueOf() - new Date(a.createdAt).valueOf()
       );
 
+    if (!formattedResponse?.length) {
+      res.status(404).json({
+        success: false,
+        message: 'Sorry, Could not fetch any comment',
+      });
+    }
+
     res.status(200).json({
       success: true,
       data: formattedResponse,
@@ -78,7 +85,6 @@ exports.fetchAllComments = async (req, res) => {
  * @requestParams accepts movieId
  * @method GET
  */
-
 exports.fetchMovieComments = async (req, res) => {
   try {
     const { movieId } = req.params;
@@ -110,6 +116,13 @@ exports.fetchMovieComments = async (req, res) => {
         (a, b) =>
           new Date(b.createdAt).valueOf() - new Date(a.createdAt).valueOf()
       );
+
+    if (!formattedResponse?.length) {
+      res.status(404).json({
+        success: false,
+        message: 'Sorry, Could not fetch any comment',
+      });
+    }
 
     res.status(200).json({
       success: true,
