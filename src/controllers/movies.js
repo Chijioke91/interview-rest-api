@@ -1,11 +1,13 @@
 const { default: axios } = require('axios');
-const { fetchMovieCommentCount } = require('../utils');
+const { fetchMovieCommentCount, sortMoviesByReleaseDate } = require('../utils');
 
 /**
- * @desc fetch all movies
- * @route /api/v1/movies
- * @returns all movies in a results array
+ * @description: This controller fetches the list of movies
+ * @route /api/v1/movies/
+ * @method GET
+ * @returns  an array movie_id, opening_crawl, release_date and comment_count
  */
+
 exports.fetchAllMovies = async (req, res, next) => {
   try {
     // the movie contains a data field that returns the result, so we destructure that and then rename it to movies
@@ -18,35 +20,44 @@ exports.fetchAllMovies = async (req, res, next) => {
         .json({ success: false, message: 'No movies found' });
     }
 
-    const formattedResponse = movies.results
-      .map(async ({ title, opening_crawl, release_date, url }) => {
-        const movieId = url.match(/(\d+)/);
+    Promise.all(
+      movies.results.map(async (movie) => {
+        const { title, opening_crawl, release_date, url } = movie;
 
-        const commentCount = await fetchMovieCommentCount(parseInt(movieId[0]));
+        let movieId = url.match(/(\d+)/)[0];
+
+        movieId = parseInt(movieId);
+
+        const comment_count = await fetchMovieCommentCount(movieId);
 
         return {
-          movieId: parseInt(movieId[0]),
-          title,
+          movie_id: movieId,
+          name: title,
           opening_crawl,
           release_date,
-          commentCount,
+          comment_count,
         };
       })
-      .sort(
-        (a, b) =>
-          new Date(a.release_date).valueOf() -
-          new Date(b.release_date).valueOf()
-      );
+    ).then((data) => {
+      const sortedMovies = sortMoviesByReleaseDate(data);
 
-    res.status(200).json({
-      success: true,
-      data: formattedResponse,
+      return res.status(200).json({
+        success: true,
+        data: sortedMovies,
+        message: 'Movies successfully fetched',
+      });
     });
   } catch (error) {
     res.json({ success: false, message: error.message });
   }
 };
 
+/**
+ * @description: This controller fetches a single movie
+ * @route /api/v1/movies/:movieId
+ * @method GET
+ * @returns  a single movie with it's movie_id, opening_crawl, release_date and comment_count
+ */
 exports.fetchMovie = async (req, res) => {
   try {
     let { movieId } = req.params;
@@ -57,14 +68,14 @@ exports.fetchMovie = async (req, res) => {
       `${process.env.SWAPI_API}/${movieId}`
     );
 
-    const commentCount = await fetchMovieCommentCount(movieId);
+    const comment_count = await fetchMovieCommentCount(movieId);
 
     let formattedMovieResponse = {
       movieId,
-      title: movie.name,
+      name: movie.title,
       opening_crawl: movie.opening_crawl,
       release_date: movie.release_date,
-      commentCount,
+      comment_count,
     };
 
     console.log('cj', movie);

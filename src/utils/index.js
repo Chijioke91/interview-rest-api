@@ -118,13 +118,20 @@ const fetchMovieCommentCount = async (movieId) => {
       },
     });
 
-    return count;
+    return count === 0 ? null : count;
   } catch (error) {
     throw new Error(error.message);
   }
 };
 
 const convertToUTC = (date) => new Date(date).toUTCString();
+
+const sortMoviesByReleaseDate = (movies) => {
+  return movies.sort(
+    (a, b) =>
+      new Date(b.release_date).valueOf() - new Date(a.release_date).valueOf()
+  );
+};
 
 module.exports = {
   paginator,
@@ -136,4 +143,5 @@ module.exports = {
   filterCharactersByGender,
   fetchMovieCommentCount,
   convertToUTC,
+  sortMoviesByReleaseDate,
 };
