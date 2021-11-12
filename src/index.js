@@ -1,6 +1,7 @@
 require('dotenv').config();
 const express = require('express');
 const morgan = require('morgan');
+const path = require('path')
 const { movieRoutes, commentRoutes, characterRoutes } = require('./routes');
 
 const port = process.env.PORT;
@@ -10,6 +11,9 @@ const app = express();
 app.set('trust proxy', true);
 
 app.use(express.json());
+
+// set static folder for our documentation
+app.use(express.static(path.join(__dirname, '../public')));
 
 // we use morgan to show all the request loggings
 if (process.env.NODE_ENV === 'development') {

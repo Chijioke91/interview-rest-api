@@ -22,4 +22,13 @@ npm run dev
 npm start
 ```
 
+## API Documentation
+
+```
+The Api Documentation is created with postman and pubished using docgen and can be found on the root of the application
+
+```
+
+see [postman documentation here](https://cjay-metacare-api.herokuapp.com/)
+
 ### version: 1.0.0
